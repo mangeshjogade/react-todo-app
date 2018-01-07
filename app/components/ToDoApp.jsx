@@ -1,35 +1,35 @@
 var React = require('react');
+var uuid = require('node-uuid');
+
+
 var ToDoList = require('ToDoList');
 var AddToDo = require('AddToDo');
 var TodoSearch = require('TodoSearch');
-var uuid = require('node-uuid')
+var TodoAPI = require('TodoAPI');
+
 
 var ToDoApp = React.createClass({
     getInitialState: function () {
       return {
         showCompleted: false,
         searchText:'',
-        todos : [
-          {
-            id: uuid(),
-            text: 'walk the dog'
-          },
-          {
-            id: uuid(),
-            text: 'Clean the yard'
-          },
-          {
-            id: uuid(),
-            text: 'Clean the yard 1'
-          },
-          {
-            id: uuid(),
-            text: 'Clean the yard 2'
-          }
-        ]
+        todos : TodoAPI.getTodos()
       };
     },
+    componentDidUpdate: function () {
+      TodoAPI.setTodos(this.state.todos);
+    },
+    handleToggle: function (id) {
+      var updateTodos = this.state.todos.map((todo) => {
+          if (todo.id === id ) {
+            todo.completed = !todo.completed;
+          }
+          return todo;
+      });
 
+      this.setState({todos : updateTodos})
+
+    },
     handleSearch: function (showCompleted, searchText) {
       this.setState({
       showCompleted: showCompleted,
@@ -41,18 +41,20 @@ var ToDoApp = React.createClass({
         todos: [
           ...this.state.todos,{
             id: uuid(),
-            text: text
+            text: text,
+            completed: false
           }
         ]
       })
     },
     render: function() {
-      var {todos} = this.state;
+      var {todos, showCompleted, searchText} = this.state;
+      var filteredTodos = TodoAPI.filterTodos(todos, showCompleted, searchText);
 
       return (
         <div>
           <TodoSearch onSearch={this.handleSearch}/>
-          <ToDoList todos={todos}/>
+          <ToDoList todos={filteredTodos} onToggle={this.handleToggle}/>
           <AddToDo onAddTodo={this.handleAddTodo}/>
         </div>
       )
